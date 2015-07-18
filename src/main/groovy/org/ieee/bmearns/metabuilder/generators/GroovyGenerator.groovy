@@ -6,6 +6,57 @@ import org.ieee.bmearns.metabuilder.Builder;
 
 class GroovyGenerator extends Generator {
 
+    protected List<String> generateBuilderMethods(Buildable buildable, Buildable.Property prop) {
+        List<String> methods;
+
+        if(prop.array) {
+            methods = new ArrayList<>(3);
+
+            String upperCasePropName = prop.name.replaceFirst('.') { it.toUpperCase() }
+
+            methods.add """        /**
+         * Builder methods to clear out all elements currently specified for
+         * the {@link ${buildable.name}#${prop.name}} property.
+         */
+        public ${buildable.builderName} clear${upperCasePropName}() {
+            this.${prop.name}.clear();
+            return this;
+        }"""
+
+            methods.add """        /**
+         * Builder methods to add any number of elements for the
+         * {@link ${buildable.name}#${prop.name}} property.
+         */
+        public ${buildable.builderName} ${prop.name}(${prop.type.name}... ${prop.name}) {
+            this.${prop.name}.addAll(Arrays.<${prop.type.name}>asList(${prop.name}));
+            return this;
+        }"""
+            
+            methods.add """        /**
+         * Builder methods to add any number of elements for the
+         * {@link ${buildable.name}#${prop.name}} property.
+         */
+        public ${buildable.builderName} ${prop.name}(List<${prop.type.name}> ${prop.name}) {
+            this.${prop.name}.addAll(${prop.name});
+            return this;
+        }"""
+            
+        }
+        else {
+            methods = new ArrayList<>(1)
+            methods.add """        /**
+         * Builder methods to set the value of the
+         * {@link ${buildable.name}#${prop.name}} property.
+         */
+        public ${buildable.builderName} ${prop.name}(${prop.type.name} ${prop.name}) {
+            this.${prop.name} = ${prop.name};
+            return this;
+        }"""
+        }
+
+        return methods
+    }
+
     @Override
     public String generate(Buildable buildable) {
         StringBuilder sb = new StringBuilder()
@@ -82,37 +133,10 @@ ${builderInitializers.collect{"            $it"}.join('\n')}
 
         String buildableField = buildable.name.replaceFirst('.') { it.toLowerCase() }
 
-        List<String> builderMethods = buildable.props.collect {
-            if (it.array) {
-                return """        /**
-         * Builder method to add one element for the {@link ${buildable.name}#${it.name}} property.
-         */
-        public ${buildable.builderName} ${it.name}(${it.type.name}... ${it.name}) {
-            this.${it.name}.addAll(Arrays.<${it.type.name}>asList(${it.name}))
-            return this;
-        }"""
-            } else {
-                return """        /**
-         * Builder method for the {@link ${buildable.name}#${it.name}} property.
-         */
-        public ${buildable.builderName} ${it.name}(${it.type.name} ${it.name}) {
-            this.${it.name} = ${it.name};
-            return this;
-        }"""
-            }
+        List<String> builderMethods = new ArrayList<>(buildable.props.length*2)
+        buildable.props.each {
+            builderMethods.addAll(this.generateBuilderMethods(buildable, it))
         }
-
-        buildable.props.findAll{ it.array }.each {
-            String upperCasePropName = it.name.replaceFirst('.') { it.toUpperCase() }
-            builderMethods.add("""        /**
-         * Builder method to remove all current elements of the {@link ${buildable.name}#${it.name}} property.
-         */
-        public ${buildable.builderName} clear${upperCasePropName}() {
-            this.${it.name}.clear();
-            return this;
-        }""")
-        }
-
 
         sb.append("""
 
