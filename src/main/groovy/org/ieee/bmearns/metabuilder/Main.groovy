@@ -11,6 +11,7 @@ class Main {
             .props(new Buildable.Property.PropertyBuilder()
                 .name("wings")
                 .type(new Type("Wing", "org.ieee.bmearns.example.planes.parts"))
+                .array(true)
                 .comment("Specifies the wings that (typically) stick out of the side of the plane.")
             )
             .props(new Buildable.Property.PropertyBuilder()

@@ -22,21 +22,50 @@ class GroovyGenerator extends Generator {
             String tail = ""
             if(it.comment != null) {
                 tail = "\n"
+                comment = comment.split(/[\r\n]/).collect{ "     * ${it}" }.join('\n')
                 comment = 
 """
     /**
-     $comment
+$comment
      */
     """
             } else {
                 comment = "    "
             }
             
-            "${comment}final ${it.type.name} ${it.name};${tail}"
+            String arrayOp = ""
+            if(it.array) {
+                arrayOp = "[]";
+            }
+
+            "${comment}final ${it.type.name}${arrayOp} ${it.name};${tail}"
         }.join('\n')
 
+        List<String> builderInitializers = new ArrayList<>(buildable.props.length)
+        buildable.props.each {
+            if (it.array) {
+                builderInitializers.add("${it.name} = new LinkedList<${it.type.name}>();")
+            }
+        }
+
+        String builderInitializerBlock = ""
+        if (builderInitializers.size() > 0) {
+            builderInitializerBlock = """
+
+        {
+${builderInitializers.collect{"            $it"}.join('\n')}
+        }
+"""
+        }
+
         String builderPropFields = buildable.props.collect {
-"        ${it.type.name} ${it.name};"
+            String type;
+            if (it.array) {
+                type = "List<${it.type.name}>"
+            } else {
+                type = it.type.name
+            }
+"        ${type} ${it.name};"
         }.join('\n')
 
         String constructorParams = buildable.props.collect {
@@ -53,17 +82,36 @@ class GroovyGenerator extends Generator {
 
         String buildableField = buildable.name.replaceFirst('.') { it.toLowerCase() }
 
-        String builderMethods = buildable.props.collect {
-"""
-        /**
+        List<String> builderMethods = buildable.props.collect {
+            if (it.array) {
+                return """        /**
+         * Builder method to add one element for the {@link ${buildable.name}#${it.name}} property.
+         */
+        public ${buildable.builderName} ${it.name}(${it.type.name}... ${it.name}) {
+            this.${it.name}.addAll(Arrays.<${it.type.name}>asList(${it.name}))
+            return this;
+        }"""
+            } else {
+                return """        /**
          * Builder method for the {@link ${buildable.name}#${it.name}} property.
          */
         public ${buildable.builderName} ${it.name}(${it.type.name} ${it.name}) {
             this.${it.name} = ${it.name};
             return this;
+        }"""
+            }
         }
-"""
-        }.join('')
+
+        buildable.props.findAll{ it.array }.each {
+            String upperCasePropName = it.name.replaceFirst('.') { it.toUpperCase() }
+            builderMethods.add("""        /**
+         * Builder method to remove all current elements of the {@link ${buildable.name}#${it.name}} property.
+         */
+        public ${buildable.builderName} clear${upperCasePropName}() {
+            this.${it.name}.clear();
+            return this;
+        }""")
+        }
 
 
         sb.append("""
@@ -91,14 +139,14 @@ ${constructorBody}
 
     public class ${buildable.builderName} implements Builder<${buildable.name}> {
 
-$builderPropFields
+${builderPropFields}${builderInitializerBlock}
 
         @Override
         public ${buildable.name} build() {
             return new ${buildable.name}($constructorArgs);
         }
 
-$builderMethods
+${builderMethods.join('\n\n')}
     }
 
 }

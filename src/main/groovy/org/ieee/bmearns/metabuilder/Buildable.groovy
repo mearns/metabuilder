@@ -99,11 +99,13 @@ class Buildable {
 
     public static class Property {
         final Type type
+        final boolean array
         final String name
         final String comment
 
-        Property(Type type, String name, String comment) {
+        Property(Type type, boolean array, String name, String comment) {
             this.type = type
+            this.array = array
             this.name = name
             this.comment = comment
         }
@@ -126,11 +128,17 @@ class Buildable {
 
         public static class PropertyBuilder implements Builder<Property> {
             Type type
+            boolean array
             String name
             String comment
 
             PropertyBuilder type(Type type) {
                 this.type = type
+                this
+            }
+
+            PropertyBuilder array(boolean array) {
+                this.array = array
                 this
             }
 
@@ -146,7 +154,7 @@ class Buildable {
 
             @Override
             Property build() {
-                new Property(type, name, comment)
+                new Property(type, array, name, comment)
             }
         }
     }
