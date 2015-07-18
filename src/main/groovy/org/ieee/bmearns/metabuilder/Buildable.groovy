@@ -1,5 +1,5 @@
 
-package org.bmearns.ieee.metabuilder;
+package org.ieee.bmearns.metabuilder;
 
 class Buildable {
 
@@ -15,6 +15,23 @@ class Buildable {
 
     Builder<Buildable> builder() {
         return new BuildablePseudoBuilder(this)
+    }
+
+
+    String generateGroovy() {
+        StringBuilder sb = new StringBuilder()
+
+        sb.append("""
+
+package ${packageName};
+
+class ${name} {
+
+}
+
+""")
+
+        return sb.toString()
     }
 
 
@@ -36,7 +53,7 @@ class Buildable {
 
         @Override
         Buildable build() {
-            return new Buildable(name, packageName, props.collect { it.build() })
+            return new Buildable(name, packageName, props.collect { it.build() }.toArray(new Property[0]))
         }
 
         BuildableBuilder name(String name) {

@@ -1,5 +1,5 @@
 
-package org.bmearns.ieee.metabuilder;
+package org.ieee.bmearns.metabuilder;
 
 interface Builder<T> {
 
