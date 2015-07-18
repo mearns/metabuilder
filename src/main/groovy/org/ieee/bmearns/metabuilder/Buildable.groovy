@@ -1,39 +1,41 @@
 
 package org.ieee.bmearns.metabuilder;
 
+import org.ieee.bmearns.metabuilder.generators.Generator;
+
 class Buildable {
 
     final String name
+    final String builderName
+    final String pseudoBuilderName
     final String packageName
     final Property[] props
 
-    protected Buildable(String name, String packageName, Property[] props) {
+    protected Buildable(String name, String builderName, String pseudoBuilderName, String packageName, Property[] props) {
         this.name = name
+        this.builderName = builderName
+        this.pseudoBuilderName = pseudoBuilderName
         this.packageName = packageName
         this.props = props
+
+        //TODO: Check for duplicate property names.
+    }
+
+    String generate(Generator gen) {
+        gen.generate(this)
+    }
+
+    def collectImports(Closure visitor) {
+        this.props
+            .collect{ it.type.importable }
+            .findAll{ it != null && it.compareTo(packageName) != 0 }
+            .unique(false)
+            .collect(visitor)
     }
 
     Builder<Buildable> builder() {
         return new BuildablePseudoBuilder(this)
     }
-
-
-    String generateGroovy() {
-        StringBuilder sb = new StringBuilder()
-
-        sb.append("""
-
-package ${packageName};
-
-class ${name} {
-
-}
-
-""")
-
-        return sb.toString()
-    }
-
 
     public static class BuildablePseudoBuilder implements Builder<Buildable> {
         final Buildable buildable
@@ -48,16 +50,34 @@ class ${name} {
 
     public static class BuildableBuilder implements Builder<Buildable> {
         String name
+        String builderName
+        String pseudoBuilderName
         String packageName
         List<Builder<Property>> props
 
+        {
+            props = new LinkedList<Builder<Property>>()
+        }
+
         @Override
         Buildable build() {
-            return new Buildable(name, packageName, props.collect { it.build() }.toArray(new Property[0]))
+            String builderName = this.builderName ?: (this.name ? (this.name + "Builder") : null)
+            String pseudoBuilderName = this.pseudoBuilderName ?: (this.name ? (this.name + "PseudoBuilder") : null)
+            return new Buildable(name, builderName, pseudoBuilderName, packageName, props.collect { it.build() }.toArray(new Property[0]))
         }
 
         BuildableBuilder name(String name) {
             this.name = name
+            return this
+        }
+
+        BuildableBuilder builderName(String builderName) {
+            this.builderName = builderName
+            return this
+        }
+
+        BuildableBuilder pseudoBuilderName(String pseudoBuilderName) {
+            this.pseudoBuilderName = pseudoBuilderName
             return this
         }
 
@@ -80,10 +100,12 @@ class ${name} {
     public static class Property {
         final Type type
         final String name
+        final String comment
 
-        Property(Type type, String name) {
+        Property(Type type, String name, String comment) {
             this.type = type
             this.name = name
+            this.comment = comment
         }
 
         Builder<Property> builder() {
@@ -105,6 +127,7 @@ class ${name} {
         public static class PropertyBuilder implements Builder<Property> {
             Type type
             String name
+            String comment
 
             PropertyBuilder type(Type type) {
                 this.type = type
@@ -116,11 +139,17 @@ class ${name} {
                 this
             }
 
+            PropertyBuilder comment(String comment) {
+                this.comment = comment
+                this
+            }
+
             @Override
             Property build() {
-                new Property(type, name)
+                new Property(type, name, comment)
             }
         }
     }
+
 }
 
