@@ -153,6 +153,12 @@ class IndentedWriter {
         return this
     }
 
+    public IndentedWriter writeStart(String text) {
+        write(this.indent)
+        write(text)
+        return this
+    }
+
     /**
      * Write the given string to the underlying {@link #writer}
      * and adds an end-of-line, but doesn't add the indent prefix
@@ -162,7 +168,7 @@ class IndentedWriter {
      * @return This object itself, for chaining.
      */
     public IndentedWriter endLine(String text) {
-        writer.write(text)
+        write(text)
         endLine()
     }
 
@@ -173,7 +179,7 @@ class IndentedWriter {
      * @return This object itself, for chaining.
      */
     public IndentedWriter endLine() {
-        writer.write('\n')
+        write('\n')
     }
 
     /**

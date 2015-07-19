@@ -95,129 +95,66 @@ class GroovyGenerator extends Generator {
         }
     }
 
-    @Override
-    public void generate(Buildable buildable, Writer writer) {
-        StringBuilder sb = new StringBuilder()
-
+    protected void writeImports(IndentedWriter writer, Buildable buildable) {
         ArrayList<String> imports = new ArrayList<>(buildable.collectImports{ it })
+
+        //Add an import for the Builder interface.
         String builderInterfaceClass = Builder.class.getCanonicalName()
         if (!(builderInterfaceClass in imports)) {
             imports.add(builderInterfaceClass)
         }
-        String importStatements = imports.collect{ "import $it;" }.join('\n')
 
-        String propFields = buildable.props.collect {
+        imports.each {
+            writer.writeLine("import $it;")
+        }
+    }
+
+    protected void writePropFields(IndentedWriter writer, Buildable buildable) {
+
+        buildable.props.each {
             String comment = it.comment
             String tail = ""
             if(it.comment != null) {
-                tail = "\n"
-                comment = comment.split(/[\r\n]/).collect{ "     * ${it}" }.join('\n')
-                comment = 
-"""
-    /**
-$comment
-     */
-    """
-            } else {
-                comment = "    "
+                writer
+                    .skip()
+                    .writeLine("/**")
+                comment.split(/\n/).each {
+                    writer.writeStart(" * ").endLine(it)
+                }
+                writer
+                    .writeLine(" */")
             }
-            
-            String arrayOp = ""
+
+            writer.writeStart("final ${it.type.name}")
             if(it.array) {
-                arrayOp = "[]";
+                writer.write("[]")
             }
-
-            "${comment}final ${it.type.name}${arrayOp} ${it.name};${tail}"
-        }.join('\n')
-
-        List<String> builderInitializers = new ArrayList<>(buildable.props.length)
-        buildable.props.each {
-            if (it.array) {
-                builderInitializers.add("${it.name} = new LinkedList<${it.type.name}>();")
+            writer.endLine(" ${it.name};")
+            if(it.comment != null) {
+                writer.skip()
             }
         }
-
-        String builderInitializerBlock = ""
-        if (builderInitializers.size() > 0) {
-            builderInitializerBlock = """
-
-        {
-${builderInitializers.collect{"            $it"}.join('\n')}
-        }
-"""
-        }
-
-        String builderPropFields = buildable.props.collect {
-            String type;
-            if (it.array) {
-                type = "List<${it.type.name}>"
-            } else {
-                type = it.type.name
-            }
-"        ${type} ${it.name};"
-        }.join('\n')
-
-        String constructorParams = buildable.props.collect {
-            "${it.type.name} ${it.name}"
-        }.join(', ')
-
-        String constructorArgs = buildable.props.collect {
-            it.name
-        }.join(', ')
-
-        String constructorBody = buildable.props.collect {
-"        this.${it.name} = ${it.name};"
-        }.join('\n')
-
-        String buildableField = buildable.name.replaceFirst('.') { it.toLowerCase() }
-
-        StringWriter sw = new StringWriter()
-        buildable.props.each {
-            this.writeBuilderMethods(this.writerFactory.build(sw), buildable, it)
-        }
-        String builderMethods = sw.toString()
-
-        sb.append("""
-
-package ${buildable.packageName};
-
-$importStatements
-
-class ${buildable.name} implements Builder<${buildable.name}> {
-
-$propFields
-
-    ${buildable.name} (${constructorParams}) {
-${constructorBody}
     }
 
-    /**
-     * Returns this object itself, to implement the @{link ${builderInterfaceClass})
-     * interface.
-     */
     @Override
-    public ${buildable.name} build() {
-        return this;
+    public void generate(Buildable buildable, Writer writer) {
+        IndentedWriter iwriter = writerFactory.build(writer)
+
+        iwriter.writeLines(
+            "",
+            "package ${buildable.packageName};",
+            "",
+        )
+        writeImports(iwriter, buildable)
+        iwriter.writeLines(
+            "",
+            "class ${buildable.name} implements Builder<${buildable.name}> {",
+            ""
+        )
+        iwriter.block(1)
+        writePropFields(iwriter, buildable)
+        iwriter.endBlock(1)
+
     }
-
-    public class ${buildable.builderName} implements Builder<${buildable.name}> {
-
-${builderPropFields}${builderInitializerBlock}
-
-        @Override
-        public ${buildable.name} build() {
-            return new ${buildable.name}($constructorArgs);
-        }
-
-${builderMethods}
-    }
-
-}
-
-""")
-
-        writer.write(sb.toString())
-    }
-
 }
 
