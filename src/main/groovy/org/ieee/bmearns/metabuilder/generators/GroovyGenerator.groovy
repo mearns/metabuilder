@@ -21,55 +21,78 @@ class GroovyGenerator extends Generator {
         this(new IndentedWriter.Factory("    ", 0))
     }
 
-    protected List<String> generateBuilderMethods(Buildable buildable, Buildable.Property prop) {
-        List<String> methods;
+    protected void writeBuilderMethods(IndentedWriter writer, Buildable buildable, Buildable.Property prop) {
 
         if(prop.array) {
-            methods = new ArrayList<>(3);
 
             String upperCasePropName = prop.name.replaceFirst('.') { it.toUpperCase() }
 
-            methods.add """        /**
-         * Builder methods to clear out all elements currently specified for
-         * the {@link ${buildable.name}#${prop.name}} property.
-         */
-        public ${buildable.builderName} clear${upperCasePropName}() {
-            this.${prop.name}.clear();
-            return this;
-        }"""
+            writer
+                .writeLines(
+                    "/**",
+                    " * Builder method to clear out all elements currently specified for",
+                    " * the {@link ${buildable.name}#${prop.name}} property.",
+                    " */",
+                    "public ${buildable.builderName} clear${upperCasePropName}() {"
+                )
+                .block(1).writeLines(
+                        "this.${prop.name}.clear();",
+                        "return this;"
+                )
+                .endBlock(1).writeLine(
+                    "}"
+                )
 
-            methods.add """        /**
-         * Builder methods to add any number of elements for the
-         * {@link ${buildable.name}#${prop.name}} property.
-         */
-        public ${buildable.builderName} ${prop.name}(${prop.type.name}... ${prop.name}) {
-            this.${prop.name}.addAll(Arrays.<${prop.type.name}>asList(${prop.name}));
-            return this;
-        }"""
+            writer
+                .writeLines(
+                    "/**",
+                    " * Builder methods to add any number of elements for the",
+                    " * {@link ${buildable.name}#${prop.name}} property.",
+                    " */",
+                    "public ${buildable.builderName} ${prop.name}(${prop.type.name}... ${prop.name}) {"
+                )
+                .block(1).writeLines(
+                        "this.${prop.name}.addAll(Arrays.<${prop.type.name}>asList(${prop.name}));",
+                        "return this;"
+                )
+                .endBlock(1).writeLine(
+                    "}",
+                )
             
-            methods.add """        /**
-         * Builder methods to add any number of elements for the
-         * {@link ${buildable.name}#${prop.name}} property.
-         */
-        public ${buildable.builderName} ${prop.name}(List<${prop.type.name}> ${prop.name}) {
-            this.${prop.name}.addAll(${prop.name});
-            return this;
-        }"""
+            writer
+                .writeLines(
+                    "/**",
+                    " * Builder methods to add any number of elements for the",
+                    " * {@link ${buildable.name}#${prop.name}} property.",
+                    " */",
+                    "public ${buildable.builderName} ${prop.name}(List<${prop.type.name}> ${prop.name}) {"
+                )
+                .block(1).writeLines(
+                    "this.${prop.name}.addAll(${prop.name});",
+                    "return this;"
+                )
+                .endBlock(1).writeLine(
+                    "}"
+                )
             
         }
         else {
-            methods = new ArrayList<>(1)
-            methods.add """        /**
-         * Builder methods to set the value of the
-         * {@link ${buildable.name}#${prop.name}} property.
-         */
-        public ${buildable.builderName} ${prop.name}(${prop.type.name} ${prop.name}) {
-            this.${prop.name} = ${prop.name};
-            return this;
-        }"""
+            writer
+                .writeLines(
+                    "/**",
+                    " * Builder methods to set the value of the",
+                    " * {@link ${buildable.name}#${prop.name}} property.",
+                    " */",
+                    "public ${buildable.builderName} ${prop.name}(${prop.type.name} ${prop.name}) {"
+                )
+                .block(1).writeLines(
+                    "this.${prop.name} = ${prop.name};",
+                    "return this;"
+                )
+                .endBlock(1).writeLine(
+                    "}"
+                )
         }
-
-        return methods
     }
 
     @Override
@@ -148,10 +171,11 @@ ${builderInitializers.collect{"            $it"}.join('\n')}
 
         String buildableField = buildable.name.replaceFirst('.') { it.toLowerCase() }
 
-        List<String> builderMethods = new ArrayList<>(buildable.props.length*2)
+        StringWriter sw = new StringWriter()
         buildable.props.each {
-            builderMethods.addAll(this.generateBuilderMethods(buildable, it))
+            this.writeBuilderMethods(this.writerFactory.build(sw), buildable, it)
         }
+        String builderMethods = sw.toString()
 
         sb.append("""
 
@@ -185,7 +209,7 @@ ${builderPropFields}${builderInitializerBlock}
             return new ${buildable.name}($constructorArgs);
         }
 
-${builderMethods.join('\n\n')}
+${builderMethods}
     }
 
 }

@@ -245,6 +245,7 @@ class IndentedWriter {
      */
     public IndentedWriter writeLines(String... line) {
         line.each{ writeLine(it) }
+        this
     }
 
     /**
