@@ -11,6 +11,8 @@ class Buildable {
     final String packageName
     final Property[] props
 
+    //XXX: Allow use of Builders for properties.
+
     protected Buildable(String name, String builderName, String pseudoBuilderName, String packageName, Property[] props) {
         this.name = name
         this.builderName = builderName
