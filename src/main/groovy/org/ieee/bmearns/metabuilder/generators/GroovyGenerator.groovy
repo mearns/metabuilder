@@ -3,8 +3,23 @@ package org.ieee.bmearns.metabuilder.generators;
 
 import org.ieee.bmearns.metabuilder.Buildable;
 import org.ieee.bmearns.metabuilder.Builder;
+import org.ieee.bmearns.metabuilder.generators.util.IndentedWriter;
 
 class GroovyGenerator extends Generator {
+
+    IndentedWriter.Factory writerFactory
+
+    public GroovyGenerator(IndentedWriter.Factory writerFactory) {
+        this.writerFactory = writerFactory
+    }
+
+    public GroovyGenerator(IndentedWriter writerTemplate) {
+        this(writerTemplate.factory())
+    }
+
+    public GroovyGenerator() {
+        this(new IndentedWriter.Factory("    ", 0))
+    }
 
     protected List<String> generateBuilderMethods(Buildable buildable, Buildable.Property prop) {
         List<String> methods;
@@ -58,7 +73,7 @@ class GroovyGenerator extends Generator {
     }
 
     @Override
-    public String generate(Buildable buildable) {
+    public void generate(Buildable buildable, Writer writer) {
         StringBuilder sb = new StringBuilder()
 
         ArrayList<String> imports = new ArrayList<>(buildable.collectImports{ it })
@@ -177,7 +192,7 @@ ${builderMethods.join('\n\n')}
 
 """)
 
-        return sb.toString()
+        writer.write(sb.toString())
     }
 
 }

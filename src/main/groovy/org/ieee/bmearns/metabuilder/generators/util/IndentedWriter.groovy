@@ -40,6 +40,61 @@ class IndentedWriter {
      */
     private Stack<Integer> blockStack;
 
+    public static class Factory {
+        private final int indentLevel;
+        private final String tabString;
+
+        public static final String INDENT_2_SPACE = "  "
+        public static final String INDENT_4_SPACE = "    "
+        public static final String INDENT_8_SPACE = "        "
+        public static final String INDENT_TAB = "\t"
+
+        public Factory(String tabString, int indentLevel) {
+            this.tabString = tabString
+            this.indentLevel = indentLevel
+        }
+
+        public Factory(String tabString) {
+            this(tabString, 0)
+        }
+
+        public static Factory TwoSpaces() {
+            return new Factory(INDENT_2_SPACE)
+        }
+
+        public static Factory FourSpaces() {
+            return new Factory(INDENT_4_SPACE)
+        }
+
+        public static Factory EightSpaces() {
+            return new Factory(INDENT_8_SPACE)
+        }
+
+        public static Factory Tab() {
+            return new Factory(INDENT_TAB)
+        }
+
+        public static Factory TwoSpaces(int level) {
+            return new Factory(INDENT_2_SPACE, level)
+        }
+
+        public static Factory FourSpaces(int level) {
+            return new Factory(INDENT_4_SPACE, level)
+        }
+
+        public static Factory EightSpaces(int level) {
+            return new Factory(INDENT_8_SPACE, level)
+        }
+
+        public static Factory Tab(int level) {
+            return new Factory(INDENT_TAB, level)
+        }
+
+        public IndentedWriter build(Writer writer) {
+            return new IndentedWriter(writer, this.tabString, this.indentLevel);
+        }
+    }
+
     IndentedWriter(Writer writer, String tabString, int indentLevel) {
         this.blockStack = new Stack<>();
         this.writer = writer
@@ -49,6 +104,22 @@ class IndentedWriter {
     }
 
     public static class BlockException extends RuntimeException {}
+
+    public Factory factory() {
+        return new Factory(this.tabString, this.indentLevel)
+    }
+
+    public Factory factory(int level) {
+        return new Factory(this.tabString, level)
+    }
+
+    /**
+     * Creates a new {@link IndentedWriter} with the same parameters as this
+     * one, but wrapping the given writer.
+     */
+    public IndentedWriter spawn(Writer writer) {
+        return new IndentedWriter(writer, tabString, indentLevel)
+    }
 
     /**
      * Called any time the {@link #indentLevel} is modified, to rebuild the
