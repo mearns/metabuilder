@@ -23,7 +23,7 @@ class Main {
             })
             .props(new Buildable.Property.PropertyBuilder().update {
                 name "array"
-                type new Type("boolean")
+                type new Type("Boolean")
             })
             .props(new Buildable.Property.PropertyBuilder().update {
                 name "comment"
