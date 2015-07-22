@@ -31,6 +31,17 @@ class GroovyGenerator extends Generator {
             imports.add(builderInterfaceClass)
         }
 
+        //And Supplier and Suppliers
+        String suppliersImport = 'com.google.common.base.Suppliers'
+        if(!(suppliersImport in imports)) {
+            imports.add(suppliersImport)
+        }
+        
+        String supplierImport = 'com.google.common.base.Supplier'
+        if(!(supplierImport in imports)) {
+            imports.add(supplierImport)
+        }
+
         imports.each {
             writer.writeLine("import $it;")
         }
@@ -79,10 +90,10 @@ class GroovyGenerator extends Generator {
     protected void writeBuilderFields(IndentedWriter writer, Buildable buildable) {
         buildable.props.each {
             if(it.array) {
-                writer.writeStart("List<${it.type.name}>")
+                writer.writeStart("List<Supplier<${it.type.name}>>")
             }
             else {
-                writer.writeStart("${it.type.name}")
+                writer.writeStart("Suplier<${it.type.name}>")
             }
             writer.endLine(" ${it.name};")
         }
@@ -96,7 +107,7 @@ class GroovyGenerator extends Generator {
 
             buildable.props.each {
                 if(it.array) {
-                    writer.writeLine("${it.name} = new LinkedList<${it.type.name}>();")
+                    writer.writeLine("${it.name} = new LinkedList<Supplier<${it.type.name}>>();")
                 }
             }
                     
@@ -139,7 +150,24 @@ class GroovyGenerator extends Generator {
                     "public ${buildable.builderName} ${prop.name}(${prop.type.name}... ${prop.name}) {"
                 )
                 .block(1).writeLines(
-                        "this.${prop.name}.addAll(Arrays.<${prop.type.name}>asList(${prop.name}));",
+                        "this.${prop.name}(Arrays.<${prop.type.name}>asList(${prop.name}));",
+                        "return this;"
+                )
+                .endBlock(1).writeLine(
+                    "}",
+                )
+                .skip()
+            
+            writer
+                .writeLines(
+                    "/**",
+                    " * Builder methods to add any number of elements for the",
+                    " * {@link ${buildable.name}#${prop.name}} property.",
+                    " */",
+                    "public ${buildable.builderName} ${prop.name}(Supplier<${prop.type.name}>... ${prop.name}Suppliers) {"
+                )
+                .block(1).writeLines(
+                        "this.${prop.name}(Arrays.<Supplier<${prop.type.name}>>asList(${prop.name}Supplier));",
                         "return this;"
                 )
                 .endBlock(1).writeLine(
@@ -156,7 +184,24 @@ class GroovyGenerator extends Generator {
                     "public ${buildable.builderName} ${prop.name}(List<${prop.type.name}> ${prop.name}) {"
                 )
                 .block(1).writeLines(
-                    "this.${prop.name}.addAll(${prop.name});",
+                    "this.${prop.name}(${prop.name}.collect{Suppliers.<${prop.type.name}>ofInstance(it)});",
+                    "return this;"
+                )
+                .endBlock(1).writeLine(
+                    "}"
+                )
+                .skip()
+
+            writer
+                .writeLines(
+                    "/**",
+                    " * Builder methods to add the given list of elements for the",
+                    " * {@link ${buildable.name}#${prop.name}} property.",
+                    " */",
+                    "public ${buildable.builderName} ${prop.name}(List<Supplier<${prop.type.name}>> ${prop.name}Suppliers) {"
+                )
+                .block(1).writeLines(
+                    "this.${prop.name}.addAll(${prop.name}Suppliers);",
                     "return this;"
                 )
                 .endBlock(1).writeLine(
@@ -171,10 +216,27 @@ class GroovyGenerator extends Generator {
                     " * Builder methods to set the value of the",
                     " * {@link ${buildable.name}#${prop.name}} property.",
                     " */",
+                    "public ${buildable.builderName} ${prop.name}(Supplier<${prop.type.name}> ${prop.name}Supplier) {"
+                )
+                .block(1).writeLines(
+                    "this.${prop.name} = ${prop.name}Supplier;",
+                    "return this;"
+                )
+                .endBlock(1).writeLine(
+                    "}"
+                )
+                .skip()
+
+            writer
+                .writeLines(
+                    "/**",
+                    " * Builder methods to set the value of the",
+                    " * {@link ${buildable.name}#${prop.name}} property.",
+                    " */",
                     "public ${buildable.builderName} ${prop.name}(${prop.type.name} ${prop.name}) {"
                 )
                 .block(1).writeLines(
-                    "this.${prop.name} = ${prop.name};",
+                    "this.${prop.name}(Suppliers.ofInstance(${prop.name}));",
                     "return this;"
                 )
                 .endBlock(1).writeLine(
@@ -190,6 +252,32 @@ class GroovyGenerator extends Generator {
         }
     }
 
+    protected void writeBuildMethod(IndentedWriter writer, Buildable buildable) {
+        writer
+            .writeLines(
+                "/**",
+                " * Builds and returns a new {@link ${buildable.name}} instance from the",
+                " * currently configured properties.",
+                " */",
+                "@Override",
+                "public ${buildable.name} build() {"
+            )
+            .block(1)
+            .writeStart(
+                "return new ${buildable.name}("
+            )
+            .write(buildable.props.collect {
+                "${it.name}.get()"
+            }.join(', '))
+            .endLine(");")
+
+        writer
+            .endBlock(1)
+            .writeLine(
+                "}"
+            )
+    }
+
     protected void writeBuilderClass(IndentedWriter writer, Buildable buildable) {
         //TODO: Use an AbstractBuilder class.
         writer.writeLine("public static class ${buildable.builderName} implements Builder<${buildable.name}> {")
@@ -199,6 +287,7 @@ class GroovyGenerator extends Generator {
         writer.skip()
         writeBuilderInitBlocks(writer, buildable)
         writeBuilderMethods(writer, buildable)
+        writeBuildMethod(writer, buildable)
 
         writer.endBlock(1)
         writer.writeLine("}")

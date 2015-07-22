@@ -20,7 +20,7 @@ class Main {
             )
             .props(new Buildable.Property.PropertyBuilder()
                 .name("model")
-                .type(new Type("Models", "org.ieee.bmearns.example.planes"))
+                .type(new Type("Model", "org.ieee.bmearns.example.planes"))
             )
             .props(new Buildable.Property.PropertyBuilder()
                 .name("seats")

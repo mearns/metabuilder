@@ -116,6 +116,10 @@ class Buildable {
             new PropertyPseudoBuilder(this)
         }
 
+        public boolean usesBuilder() {
+            return this.builder != null
+        }
+
         public static class PropertyPseudoBuilder implements Builder<Property> {
             final Property property
             PropertyPseudoBuilder(Property property) {
