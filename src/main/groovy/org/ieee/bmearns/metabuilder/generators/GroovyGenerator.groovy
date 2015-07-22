@@ -2,7 +2,7 @@
 package org.ieee.bmearns.metabuilder.generators;
 
 import org.ieee.bmearns.metabuilder.Buildable;
-import org.ieee.bmearns.metabuilder.Builder;
+import org.ieee.bmearns.metabuilder.AbstractBuilder;
 import org.ieee.bmearns.metabuilder.generators.util.IndentedWriter;
 
 class GroovyGenerator extends Generator {
@@ -25,8 +25,8 @@ class GroovyGenerator extends Generator {
     protected void writeImports(IndentedWriter writer, Buildable buildable) {
         ArrayList<String> imports = new ArrayList<>(buildable.collectImports{ it })
 
-        //Add an import for the Builder interface.
-        String builderInterfaceClass = Builder.class.getCanonicalName()
+        //Add an import for the AbstractBuilder
+        String builderInterfaceClass = AbstractBuilder.class.getCanonicalName()
         if (!(builderInterfaceClass in imports)) {
             imports.add(builderInterfaceClass)
         }
@@ -280,7 +280,7 @@ class GroovyGenerator extends Generator {
 
     protected void writeBuilderClass(IndentedWriter writer, Buildable buildable) {
         //TODO: Use an AbstractBuilder class.
-        writer.writeLine("public static class ${buildable.builderName} implements Builder<${buildable.name}> {")
+        writer.writeLine("public static class ${buildable.builderName} extends AbstractBuilder<${buildable.name}> {")
         writer.block(1)
 
         writeBuilderFields(writer, buildable)
@@ -305,7 +305,7 @@ class GroovyGenerator extends Generator {
         writeImports(iwriter, buildable)
         iwriter.writeLines(
             "",
-            "class ${buildable.name} implements Builder<${buildable.name}> {",
+            "class ${buildable.name} {",
             ""
         )
         iwriter.block(1)

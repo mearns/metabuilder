@@ -39,7 +39,7 @@ class Buildable {
         return new BuildablePseudoBuilder(this)
     }
 
-    public static class BuildablePseudoBuilder implements Builder<Buildable> {
+    public static class BuildablePseudoBuilder extends AbstractBuilder<Buildable, BuildablePseudoBuilder> {
         final Buildable buildable
         BuildablePseudoBuilder(Buildable buildable) {
             this.buildable = buildable
@@ -50,7 +50,7 @@ class Buildable {
         }
     }
 
-    public static class BuildableBuilder implements Builder<Buildable> {
+    public static class BuildableBuilder extends AbstractBuilder<Buildable, BuildableBuilder> {
         String name
         String builderName
         String pseudoBuilderName
@@ -120,7 +120,7 @@ class Buildable {
             return this.builder != null
         }
 
-        public static class PropertyPseudoBuilder implements Builder<Property> {
+        public static class PropertyPseudoBuilder extends AbstractBuilder<Property, PropertyPseudoBuilder> {
             final Property property
             PropertyPseudoBuilder(Property property) {
                 this.property = property
@@ -132,7 +132,7 @@ class Buildable {
             }
         }
 
-        public static class PropertyBuilder implements Builder<Property> {
+        public static class PropertyBuilder extends AbstractBuilder<Property, PropertyBuilder> {
             Type type
             boolean array
             String name

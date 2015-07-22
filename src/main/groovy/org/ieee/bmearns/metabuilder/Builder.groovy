@@ -1,7 +1,9 @@
 
 package org.ieee.bmearns.metabuilder;
 
-interface Builder<T> {
+import com.google.common.base.Supplier;
+
+interface Builder<T> extends Supplier<T> {
 
     T build();
 
