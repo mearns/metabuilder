@@ -104,12 +104,14 @@ class Buildable {
         final boolean array
         final String name
         final String comment
+        final Type builder
 
-        Property(Type type, boolean array, String name, String comment) {
+        Property(Type type, boolean array, String name, String comment, Type builder) {
             this.type = type
             this.array = array
             this.name = name
             this.comment = comment
+            this.builder = builder
         }
 
         Builder<Property> builder() {
@@ -137,6 +139,7 @@ class Buildable {
             boolean array
             String name
             String comment
+            Type builder
 
             PropertyBuilder type(Type type) {
                 this.type = type
@@ -158,9 +161,14 @@ class Buildable {
                 this
             }
 
+            PropertyBuilder builder(Type builder) {
+                this.builder = builder
+                this
+            }
+
             @Override
             Property build() {
-                new Property(type, array, name, comment)
+                new Property(type, array, name, comment, builder)
             }
         }
     }

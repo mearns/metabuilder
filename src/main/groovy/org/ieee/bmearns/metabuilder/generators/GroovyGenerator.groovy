@@ -174,6 +174,25 @@ class GroovyGenerator extends Generator {
                     "}",
                 )
                 .skip()
+
+            if(prop.usesBuilder()) {
+                writer
+                    .writeLines(
+                        "/**",
+                        " * Builder methods to add any number of elements for the",
+                        " * {@link ${buildable.name}#${prop.name}} property.",
+                        " */",
+                        "public ${buildable.builderName} ${prop.name}(Closure... ${prop.name}Builders) {"
+                    )
+                    .block(1).writeLines(
+                        "this.${prop.name}(${prop.name}Builders.collect{new ${prop.builder.name}().update(it)});",
+                        "return this;"
+                    )
+                    .endBlock(1).writeLine(
+                        "}"
+                    )
+                    .skip()
+            }
             
             writer
                 .writeLines(
@@ -208,6 +227,26 @@ class GroovyGenerator extends Generator {
                     "}"
                 )
                 .skip()
+
+            if(prop.usesBuilder()) {
+                writer
+                    .writeLines(
+                        "/**",
+                        " * Builder methods to add the given list of elements for the",
+                        " * {@link ${buildable.name}#${prop.name}} property.",
+                        " */",
+                        "public ${buildable.builderName} ${prop.name}(List<Closure>... ${prop.name}Builders) {"
+                    )
+                    .block(1).writeLines(
+                        "this.${prop.name}(${prop.name}Builders.collect{new ${prop.builder.name}().update(it)});",
+                        "return this;"
+                    )
+                    .endBlock(1).writeLine(
+                        "}"
+                    )
+                    .skip()
+            }
+            
         }
         else {
             writer
@@ -243,6 +282,25 @@ class GroovyGenerator extends Generator {
                     "}"
                 )
                 .skip()
+
+            if(prop.usesBuilder()) {
+                writer
+                    .writeLines(
+                        "/**",
+                        " * Builder methods to set the value of the",
+                        " * {@link ${buildable.name}#${prop.name}} property.",
+                        " */",
+                        "public ${buildable.builderName} ${prop.name}(Closure ${prop.name}Builder) {"
+                    )
+                    .block(1).writeLines(
+                        "this.${prop.name}(new ${prop.builder.name}().update(${prop.name}Builder));",
+                        "return this;"
+                    )
+                    .endBlock(1).writeLine(
+                        "}"
+                    )
+                    .skip()
+            }
         }
     }
 
