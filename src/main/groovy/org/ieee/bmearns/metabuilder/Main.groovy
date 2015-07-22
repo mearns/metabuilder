@@ -5,32 +5,57 @@ import org.ieee.bmearns.metabuilder.generators.*;
 
 class Main {
     public static void main(String[] args) {
-        Buildable buildable = (new Buildable.BuildableBuilder())
-            .name("Airplane")
-            .packageName("org.ieee.bmearns.example.planes")
-            .props(new Buildable.Property.PropertyBuilder()
-                .name("wings")
-                .type(new Type("Wing", "org.ieee.bmearns.example.planes.parts"))
-                .array(true)
-                .builder(new Type("WingBuilder", "org.ieee.bmearns.example.planes.parts"))
-                .comment("Specifies the wings that (typically) stick out of the side of the plane.")
-            )
-            .props(new Buildable.Property.PropertyBuilder()
-                .name("tail")
-                .type(new Type("Tail", "org.ieee.bmearns.example.planes.parts"))
-                .builder(new Type("TailBuilder", "org.ieee.bmearns.example.planes.parts"))
-            )
-            .props(new Buildable.Property.PropertyBuilder()
-                .name("model")
-                .type(new Type("Model", "org.ieee.bmearns.example.planes"))
-            )
-            .props(new Buildable.Property.PropertyBuilder()
-                .name("seats")
-                .type(new Type("int"))
-            )
+
+        Buildable props = (new Buildable.BuildableBuilder())
+            .name("Property")
+            .packageName("org.ieee.bmearns.metabuilder")
+            .props(new Buildable.Property.PropertyBuilder().update {
+                name "name"
+                type new Type("String")
+            })
+            .props(new Buildable.Property.PropertyBuilder().update {
+                name "type"
+                type new Type("Type")
+            })
+            .props(new Buildable.Property.PropertyBuilder().update {
+                name "builder"
+                type new Type("Type")
+            })
+            .props(new Buildable.Property.PropertyBuilder().update {
+                name "array"
+                type new Type("boolean")
+            })
+            .props(new Buildable.Property.PropertyBuilder().update {
+                name "comment"
+                type new Type("String")
+            })
             .build()
 
-        println buildable.generate(new GroovyGenerator())
+        Buildable buildable = (new Buildable.BuildableBuilder())
+            .name("Buildable")
+            .packageName("org.ieee.bmearns.metabuilder")
+            .props(new Buildable.Property.PropertyBuilder().update {
+                name "name"
+                type new Type("String")
+            })
+            .props(new Buildable.Property.PropertyBuilder().update {
+                name "builderName"
+                type new Type("String")
+            })
+            .props(new Buildable.Property.PropertyBuilder().update {
+                name "packageName"
+                type new Type("String")
+            })
+            .props(new Buildable.Property.PropertyBuilder().update {
+                name "props"
+                type new Type("Property")
+                array true
+                builder new Type("PropertyBuilder")
+            })
+            .build()
+
+        println props.generate(new GroovyGenerator())
+        /*println buildable.generate(new GroovyGenerator())*/
     }
 }
 

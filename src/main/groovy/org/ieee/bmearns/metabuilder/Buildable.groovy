@@ -7,16 +7,14 @@ class Buildable {
 
     final String name
     final String builderName
-    final String pseudoBuilderName
     final String packageName
     final Property[] props
 
     //XXX: Allow use of Builders for properties.
 
-    protected Buildable(String name, String builderName, String pseudoBuilderName, String packageName, Property[] props) {
+    protected Buildable(String name, String builderName, String packageName, Property[] props) {
         this.name = name
         this.builderName = builderName
-        this.pseudoBuilderName = pseudoBuilderName
         this.packageName = packageName
         this.props = props
 
@@ -53,7 +51,6 @@ class Buildable {
     public static class BuildableBuilder extends AbstractBuilder<Buildable, BuildableBuilder> {
         String name
         String builderName
-        String pseudoBuilderName
         String packageName
         List<Builder<Property>> props
 
@@ -64,8 +61,7 @@ class Buildable {
         @Override
         Buildable build() {
             String builderName = this.builderName ?: (this.name ? (this.name + "Builder") : null)
-            String pseudoBuilderName = this.pseudoBuilderName ?: (this.name ? (this.name + "PseudoBuilder") : null)
-            return new Buildable(name, builderName, pseudoBuilderName, packageName, props.collect { it.build() }.toArray(new Property[0]))
+            return new Buildable(name, builderName, packageName, props.collect { it.build() }.toArray(new Property[0]))
         }
 
         BuildableBuilder name(String name) {
@@ -75,11 +71,6 @@ class Buildable {
 
         BuildableBuilder builderName(String builderName) {
             this.builderName = builderName
-            return this
-        }
-
-        BuildableBuilder pseudoBuilderName(String pseudoBuilderName) {
-            this.pseudoBuilderName = pseudoBuilderName
             return this
         }
 
